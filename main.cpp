@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glu.h> //Biblioteka pomocnicza
+#include <iostream>
+#include <fstream>
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
@@ -84,6 +86,47 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
+    GLfloat * xs; //punkty
+    GLfloat * ys;
+    GLfloat * zs;
+
+    GLfloat * nxs; //wektory normalne
+    GLfloat * nys;
+    GLfloat * nzs;
+
+    GLfloat * us; //mapowanie tekstur
+    GLfloat * vs;
+    int ile;
+
+    std::ifstream plik("nautilus.3d");
+    if(plik)
+    {
+        plik>>ile;
+        xs = new GLfloat[ile];
+        ys = new GLfloat[ile];
+        zs = new GLfloat[ile];
+        nxs = new GLfloat[ile];
+        nys = new GLfloat[ile];
+        nzs = new GLfloat[ile];
+        us = new GLfloat[ile];
+        vs = new GLfloat[ile];
+        for(int i=0;i<ile;i++)
+        {
+            plik>>xs[i];
+            xs[i]/=60.0f;
+            plik>>ys[i];
+            ys[i]/=60.0f;
+            plik>>zs[i];
+            zs[i]/=60.0f;
+            plik>>nxs[i];
+            plik>>nys[i];
+            plik>>nzs[i];
+            plik>>us[i];
+            plik>>vs[i];
+        }
+        plik.close();
+    }
+
     /* program main loop */
     while (!bQuit)
     {
@@ -108,17 +151,16 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glLoadIdentity();
 
-            glTranslatef(0.0f,0.0f,-6.0f);
+            glTranslatef(0.0f,-2.0f,-6.0f);
 
             glPushMatrix();
-            glRotatef(theta, 0.0f, 0.0f, 1.0f);
-
+            glRotatef(theta, 0.0f, 1.0f, 0.0f);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glBegin(GL_TRIANGLES);
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.0f,   1.0f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.87f,  -0.5f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.87f, -0.5f);
-
+                for(int i=0; i<ile; i++)
+                {
+                    glVertex3f(xs[i],ys[i],zs[i]);
+                }
             glEnd();
 
             glPopMatrix();
