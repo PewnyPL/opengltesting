@@ -1,10 +1,38 @@
 #include <windows.h>
 #include <gl/gl.h>
+#include <gl/glu.h> //Biblioteka pomocnicza
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
+GLint szer = 640; //
+GLint wyso = 480; // wysokoœc i szerokosc okna
+
+GLvoid ReSizeGLScene(GLsizei width, GLsizei height) //prosta metoda do obslugi zmiany rozmiaru okna
+{
+    if (height==0) height=1; //aby zapobiec dzieleniu przez zero
+
+    glViewport(0,0,width,height); //ustawienie rozmiaru obszaru OpenGL do rozmiaru okna
+
+    glMatrixMode(GL_PROJECTION); //macierz projekcji
+    glLoadIdentity(); //reset macierzy
+    gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,100.0f); //zmiana perspektywy i wspólczynnika rozmiaru okna
+
+    glMatrixMode(GL_MODELVIEW); //macierz modelu
+    glLoadIdentity();
+}
+
+int InitGL()
+{
+    glShadeModel(GL_SMOOTH); //wygladzanie swiatla
+    glClearColor(0.0f,0.0f,0.0f,0.0f); //tlo
+    glClearDepth(1.0f); //bufor glebokosci
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); //korekcja perspektywy
+    return TRUE;
+}
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -44,8 +72,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
                           WS_OVERLAPPEDWINDOW,
                           CW_USEDEFAULT,
                           CW_USEDEFAULT,
-                          256,
-                          256,
+                          szer,
+                          wyso,
                           NULL,
                           NULL,
                           hInstance,
@@ -77,8 +105,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
         {
             /* OpenGL animation code goes here */
 
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glLoadIdentity();
+
+            glTranslatef(0.0f,0.0f,-6.0f);
 
             glPushMatrix();
             glRotatef(theta, 0.0f, 0.0f, 1.0f);
@@ -131,6 +161,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         break;
 
+        case WM_SIZE:
+        {
+            ReSizeGLScene(LOWORD(lParam),HIWORD(lParam));
+            break;
+        }
+
         default:
             return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
@@ -167,6 +203,8 @@ void EnableOpenGL(HWND hwnd, HDC* hDC, HGLRC* hRC)
     *hRC = wglCreateContext(*hDC);
 
     wglMakeCurrent(*hDC, *hRC);
+    ReSizeGLScene(szer,wyso);
+    InitGL();
 }
 
 void DisableOpenGL (HWND hwnd, HDC hDC, HGLRC hRC)
