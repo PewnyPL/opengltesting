@@ -37,6 +37,13 @@ int InitGL()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); //korekcja perspektywy
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,0);
+    glEnable(GL_COLOR_MATERIAL);
+    float black[4]={0,0,0,0};
+    glMaterialfv(GL_FRONT,GL_AMBIENT,black);
+    glMaterialfv(GL_FRONT,GL_SPECULAR,black);
     return TRUE;
 }
 
@@ -144,6 +151,11 @@ int WINAPI WinMain(HINSTANCE hInstance,
         if(texture.imageData) free(texture.imageData);
     }
 
+    float pos[] = {0,0,35,1};
+    float diffuse[] = {1,1,1,1};
+    float specular[] = {0,0,0,1};
+    float ambient[] = {0,0,0,1};
+
     /* program main loop */
     while (!bQuit)
     {
@@ -168,16 +180,23 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glLoadIdentity();
 
+            glPushMatrix();
             glTranslatef(0.0f,-2.0f,-6.0f);
+            glRotatef(theta, 0.0f, 1.0f, 0.0f);
+            glLightfv(GL_LIGHT0,GL_POSITION,pos);
+            glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuse);
+            glLightfv(GL_LIGHT0,GL_SPECULAR,specular);
+            glLightfv(GL_LIGHT0,GL_AMBIENT,ambient);
+            glPopMatrix();
 
             glPushMatrix();
-            glRotatef(theta, 0.0f, 1.0f, 0.0f);
+            glTranslatef(0.0f,-2.0f,-6.0f);
             //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glBindTexture(GL_TEXTURE_2D, texture.texID);
             glBegin(GL_TRIANGLES);
                 for(int i=0; i<ile; i++)
                 {
-                    glTexCoord2f(us[i],vs[i]); glVertex3f(xs[i],ys[i],zs[i]);
+                    glNormal3f(nxs[i], nys[i], nzs[i]); glTexCoord2f(us[i],vs[i]); glVertex3f(xs[i],ys[i],zs[i]);
                 }
             glEnd();
 
