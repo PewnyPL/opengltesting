@@ -3,6 +3,7 @@
 #include <gl/glu.h> //Biblioteka pomocnicza
 #include <iostream>
 #include <fstream>
+#include "Texture.h"
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
@@ -10,6 +11,8 @@ void DisableOpenGL(HWND, HDC, HGLRC);
 
 GLint szer = 640; //
 GLint wyso = 480; // wysokoœc i szerokosc okna
+
+bool LoadTGA(Texture *, char *);
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height) //prosta metoda do obslugi zmiany rozmiaru okna
 {
@@ -27,6 +30,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height) //prosta metoda do obslugi z
 
 int InitGL()
 {
+    glEnable(GL_TEXTURE_2D);
     glShadeModel(GL_SMOOTH); //wygladzanie swiatla
     glClearColor(0.0f,0.0f,0.0f,0.0f); //tlo
     glClearDepth(1.0f); //bufor glebokosci
@@ -98,6 +102,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
     GLfloat * vs;
     int ile;
 
+    Texture texture;
+
     std::ifstream plik("nautilus.3d");
     if(plik)
     {
@@ -125,6 +131,17 @@ int WINAPI WinMain(HINSTANCE hInstance,
             plik>>vs[i];
         }
         plik.close();
+    }
+
+    if(LoadTGA(&texture, "nautilus.tga"))
+    {
+        glGenTextures(1, &texture.texID); //tworzenie tekstury
+        glBindTexture(GL_TEXTURE_2D, texture.texID);
+        glTexImage2D(GL_TEXTURE_2D,0,3,texture.width,texture.height,0,GL_RGB,GL_UNSIGNED_BYTE,texture.imageData);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        if(texture.imageData) free(texture.imageData);
     }
 
     /* program main loop */
@@ -155,11 +172,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
             glPushMatrix();
             glRotatef(theta, 0.0f, 1.0f, 0.0f);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glBindTexture(GL_TEXTURE_2D, texture.texID);
             glBegin(GL_TRIANGLES);
                 for(int i=0; i<ile; i++)
                 {
-                    glVertex3f(xs[i],ys[i],zs[i]);
+                    glTexCoord2f(us[i],vs[i]); glVertex3f(xs[i],ys[i],zs[i]);
                 }
             glEnd();
 
